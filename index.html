@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -33,72 +32,67 @@
 <body>
   <header>
     <h1>Cambio de aceite 🛵</h1>
-    <div class="small">Registra el último cambio y sincroniza entre dispositivos</div>
+    <div class="small">Usa una clave fija para sincronizar en todos tus dispositivos</div>
   </header>
 
   <main>
+    <!-- Clave fija (solo informativa) -->
     <div class="card">
-      <div class="label">Clave de sincronización</div>
-      <div class="row" style="margin-top:6px;">
-        <input id="syncKey" type="text" placeholder="Tu clave secreta" />
-        <button id="btnGen">Generar clave</button>
-        <button id="btnGuardarClave" style="background:#10b981;">Guardar clave</button>
-        <button id="btnCargar" style="background:#64748b;">Cargar desde nube</button>
-      </div>
+      <div class="label">Clave de sincronización (fija)</div>
+      <input id="syncKey" type="text" value="971be5b56e614bfda6b51a45" disabled />
       <div class="small" style="margin-top:8px;">
-        Usa una clave larga y secreta. Esa clave conecta tu PC y tu celular.
+        Esta clave está embebida en la página y se usará siempre para guardar/cargar.
       </div>
     </div>
 
-```
-<div class="card">
-  <div class="label">Hoy</div>
-  <div id="hoy" class="value mono">—</div>
-</div>
+    <div class="card">
+      <div class="label">Hoy</div>
+      <div id="hoy" class="value mono">—</div>
+    </div>
 
-<div class="grid">
-  <div class="card">
-    <div class="label">Último cambio registrado</div>
-    <div id="ultimo" class="value mono">—</div>
-    <div class="muted">Guardado en Supabase</div>
-  </div>
-  <div class="card">
-    <div class="label">Próximo cambio (1 mes)</div>
-    <div id="proximo" class="value mono">—</div>
-  </div>
-</div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">Último cambio registrado</div>
+        <div id="ultimo" class="value mono">—</div>
+        <div class="muted">Guardado en Supabase</div>
+      </div>
+      <div class="card">
+        <div class="label">Próximo cambio (1 mes)</div>
+        <div id="proximo" class="value mono">—</div>
+      </div>
+    </div>
 
-<div class="card">
-  <div class="label">Estado</div>
-  <div id="estado" class="status">—</div>
-  <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
-</div>
+    <div class="card">
+      <div class="label">Estado</div>
+      <div id="estado" class="status">—</div>
+      <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
+    </div>
 
-<div class="card">
-  <div class="label">Acciones</div>
-  <div class="row" style="margin-top:6px;">
-    <button id="btnHoy">Lo cambié hoy</button>
-    <input id="fechaManual" type="date" />
-    <button id="btnGuardarFecha">Guardar fecha</button>
-  </div>
-</div>
-```
-
+    <div class="card">
+      <div class="label">Acciones</div>
+      <div class="row" style="margin-top:6px;">
+        <button id="btnHoy">Lo cambié hoy</button>
+        <input id="fechaManual" type="date" />
+        <button id="btnGuardarFecha">Guardar fecha</button>
+      </div>
+    </div>
   </main>
 
   <footer>Hecho con 💙 por Crayolo · Supabase + GitHub Pages</footer>
 
   <!-- Supabase JS -->
-
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
   <script>
-    // === Pega aquí tus credenciales de Supabase ===
-    const SUPABASE_URL = "https://ajuqstopjdryagkjastd.supabase.co"; // <-- cámbialo
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqdXFzdG9wamRyeWFna2phc3RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MDA2ODAsImV4cCI6MjA3NDE3NjY4MH0.fe0nHs9oQZNEZQ-Eh6mHaWzX3e9KZL_bIK8X69EAxh0";                    // <-- cámbialo
+    // === Credenciales Supabase ===
+    const SUPABASE_URL = "https://ajuqstopjdryagkjastd.supabase.co"; // tu Project URL
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqdXFzdG9wamRyeWFna2phc3RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MDA2ODAsImV4cCI6MjA3NDE3NjY4MH0.fe0nHs9oQZNEZQ-Eh6mHaWzX3e9KZL_bIK8X69EAxh0"; // anon/publishable
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // === Clave fija ===
+    const FIXED_KEY = "971be5b56e614bfda6b51a45";
+
+    // === Utilidades de fecha ===
     const pad2 = n => String(n).padStart(2,'0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const fromYMD = s => { const [y,m,da]=s.split('-').map(Number); return new Date(y,m-1,da); };
@@ -147,63 +141,45 @@
       document.getElementById('contador').textContent = `Han pasado ${diasDesde} días desde el último cambio.`;
     }
 
-    // === Supabase ===
-    const KEY_LOCAL = 'aceite_sync_id';
-    const syncKeyInput = document.getElementById('syncKey');
-
-    function getSyncId(){ return localStorage.getItem(KEY_LOCAL)||''; }
-    function setSyncId(id){ localStorage.setItem(KEY_LOCAL,id); }
-
-    async function loadFromSupabase(id){
-      const { data, error } = await supabase.from('aceite_changes').select('last_date').eq('id', id).maybeSingle();
-      if(error) throw error;
-      return data?.last_date||null;
+    // === Lectura/Escritura con clave fija ===
+    async function loadFromSupabase(){
+      const { data, error } = await supabase
+        .from('aceite_changes')
+        .select('last_date')
+        .eq('id', FIXED_KEY)
+        .maybeSingle();
+      if(error) console.error(error);
+      return data?.last_date || null;
     }
 
-    async function saveToSupabase(id, lastYMD){
-      const { error } = await supabase.from('aceite_changes').upsert({ id, last_date:lastYMD });
-      if(error) throw error;
+    async function saveToSupabase(lastYMD){
+      const { error } = await supabase
+        .from('aceite_changes')
+        .upsert({ id: FIXED_KEY, last_date: lastYMD });
+      if(error) console.error(error);
     }
 
-    // === UI ===
-    document.getElementById('btnGen').onclick = ()=>{
-      const id = crypto.randomUUID().replace(/-/g,'').slice(0,24);
-      syncKeyInput.value = id;
-    };
-    document.getElementById('btnGuardarClave').onclick = ()=>{
-      const id = syncKeyInput.value.trim();
-      if(id.length<6){ alert("Clave demasiado corta"); return; }
-      setSyncId(id); alert("Clave guardada");
-    };
-    document.getElementById('btnCargar').onclick = async ()=>{
-      const id = syncKeyInput.value.trim();
-      if(!id){ alert("Pon una clave"); return; }
-      setSyncId(id);
-      const last = await loadFromSupabase(id);
-      renderEstado(last);
-      if(last) document.getElementById('fechaManual').value=last;
-    };
+    // === Botones ===
     document.getElementById('btnHoy').onclick = async ()=>{
-      const id=getSyncId()||syncKeyInput.value.trim();
-      if(!id){ alert("Primero configura tu clave"); return; }
-      setSyncId(id);
-      const today=ymd(new Date());
-      await saveToSupabase(id,today);
+      const today = ymd(new Date());
+      await saveToSupabase(today);
       renderEstado(today);
-      document.getElementById('fechaManual').value=today;
+      document.getElementById('fechaManual').value = today;
     };
+
     document.getElementById('btnGuardarFecha').onclick = async ()=>{
-      const id=getSyncId()||syncKeyInput.value.trim();
-      if(!id){ alert("Primero configura tu clave"); return; }
-      const val=document.getElementById('fechaManual').value;
+      const val = document.getElementById('fechaManual').value;
       if(!val){ alert("Elige fecha"); return; }
-      setSyncId(id);
-      await saveToSupabase(id,val);
+      await saveToSupabase(val);
       renderEstado(val);
     };
 
-    renderEstado(null);
+    // === Carga inicial ===
+    (async ()=>{
+      const last = await loadFromSupabase();
+      renderEstado(last);
+      if(last) document.getElementById('fechaManual').value = last;
+    })();
   </script>
-
 </body>
 </html>
