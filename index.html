@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -8,23 +7,22 @@
   <style>
     :root{ --bg:#f7f7fb; --card:#ffffff; --txt:#222; --muted:#666; --pri:#0f766e; --warn:#b45309; --late:#b91c1c; --btn:#0ea5e9; }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--txt); }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--txt); }
     header{ text-align:center; padding:24px 16px; }
     h1{ margin:0; font-size:clamp(20px,4vw,28px); }
     main{ max-width:760px; margin:0 auto; padding:16px; }
     .card{ background:var(--card); border-radius:16px; padding:16px; margin:12px 0; box-shadow:0 8px 24px rgba(0,0,0,.06); }
     .grid{ display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .grid > .card{ margin:0; }
     .label{ color:var(--muted); font-size:13px; }
     .value{ font-weight:700; font-size:clamp(16px,3.6vw,22px); }
     .status{ font-size:clamp(16px,3.6vw,20px); font-weight:700; margin-top:4px; }
     .ok{ color:var(--pri); } .warn{ color:var(--warn); } .late{ color:var(--late); }
-    .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
     .muted{ color:var(--muted); font-size:13px; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     .row > *{ flex:1 1 180px; }
-    button, input[type="date"], input[type="text"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
-    button{ background:var(--btn); color:white; border:none; font-weight:700; cursor:pointer; }
+    button,input[type="date"],input[type="text"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
+    button{ background:var(--btn); color:#fff; border:none; font-weight:700; cursor:pointer; }
     button:hover{ filter:brightness(.97); }
     .small{ font-size:12px; color:#777; }
     footer{ text-align:center; padding:24px; color:#888; font-size:12px; }
@@ -45,60 +43,53 @@
         <button id="btnGuardarClave" style="background:#10b981;">Guardar clave</button>
         <button id="btnCargar" style="background:#64748b;">Cargar desde nube</button>
       </div>
-      <div class="small" style="margin-top:8px;">
-        Usa una clave larga y secreta. Esa clave conecta tu PC y tu celular.
+      <div class="small" style="margin-top:8px;">Usa una clave larga y secreta. Esa clave conecta tu PC y tu celular.</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Hoy</div>
+      <div id="hoy" class="value mono">—</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Último cambio registrado</div>
+        <div id="ultimo" class="value mono">—</div>
+        <div class="muted">Guardado en Supabase</div>
+      </div>
+      <div class="card">
+        <div class="label">Próximo cambio (1 mes)</div>
+        <div id="proximo" class="value mono">—</div>
       </div>
     </div>
 
-```
-<div class="card">
-  <div class="label">Hoy</div>
-  <div id="hoy" class="value mono">—</div>
-</div>
+    <div class="card">
+      <div class="label">Estado</div>
+      <div id="estado" class="status">—</div>
+      <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
+    </div>
 
-<div class="grid">
-  <div class="card">
-    <div class="label">Último cambio registrado</div>
-    <div id="ultimo" class="value mono">—</div>
-    <div class="muted">Guardado en Supabase</div>
-  </div>
-  <div class="card">
-    <div class="label">Próximo cambio (1 mes)</div>
-    <div id="proximo" class="value mono">—</div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="label">Estado</div>
-  <div id="estado" class="status">—</div>
-  <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
-</div>
-
-<div class="card">
-  <div class="label">Acciones</div>
-  <div class="row" style="margin-top:6px;">
-    <button id="btnHoy">Lo cambié hoy</button>
-    <input id="fechaManual" type="date" />
-    <button id="btnGuardarFecha">Guardar fecha</button>
-  </div>
-</div>
-```
-
+    <div class="card">
+      <div class="label">Acciones</div>
+      <div class="row" style="margin-top:6px;">
+        <button id="btnHoy">Lo cambié hoy</button>
+        <input id="fechaManual" type="date" />
+        <button id="btnGuardarFecha">Guardar fecha</button>
+      </div>
+    </div>
   </main>
 
   <footer>Hecho con 💙 por Crayolo · Supabase + GitHub Pages</footer>
 
-  <!-- Supabase JS -->
-
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
   <script>
-    // === Pega aquí tus credenciales de Supabase ===
-    const SUPABASE_URL = "https://ajuqstopjdryagkjastd.supabase.co"; // <-- cámbialo
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqdXFzdG9wamRyeWFna2phc3RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MDA2ODAsImV4cCI6MjA3NDE3NjY4MH0.fe0nHs9oQZNEZQ-Eh6mHaWzX3e9KZL_bIK8X69EAxh0";                    // <-- cámbialo
+    // === Credenciales (pon TU URL exacta) ===
+    const SUPABASE_URL = "https://TU-PROJECT.supabase.co";   // <- COPIA EXACTO de Settings → API (o Connect)
+    const SUPABASE_ANON_KEY = "eyJ..."; // anon o sb-publishable_...
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Utilidades fecha
     const pad2 = n => String(n).padStart(2,'0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const fromYMD = s => { const [y,m,da]=s.split('-').map(Number); return new Date(y,m-1,da); };
@@ -147,7 +138,7 @@
       document.getElementById('contador').textContent = `Han pasado ${diasDesde} días desde el último cambio.`;
     }
 
-    // === Supabase ===
+    // Supabase
     const KEY_LOCAL = 'aceite_sync_id';
     const syncKeyInput = document.getElementById('syncKey');
 
@@ -155,17 +146,34 @@
     function setSyncId(id){ localStorage.setItem(KEY_LOCAL,id); }
 
     async function loadFromSupabase(id){
-      const { data, error } = await supabase.from('aceite_changes').select('last_date').eq('id', id).maybeSingle();
-      if(error) throw error;
-      return data?.last_date||null;
+      try{
+        const { data, error } = await supabase
+          .from('aceite_changes')
+          .select('last_date')
+          .eq('id', id)
+          .maybeSingle();
+        if(error) throw error;
+        return data?.last_date||null;
+      }catch(e){
+        console.error('Load error:', e);
+        alert('No se pudo cargar. Verifica URL del proyecto y que exista la tabla aceite_changes.');
+        return null;
+      }
     }
 
     async function saveToSupabase(id, lastYMD){
-      const { error } = await supabase.from('aceite_changes').upsert({ id, last_date:lastYMD });
-      if(error) throw error;
+      try{
+        const { error } = await supabase
+          .from('aceite_changes')
+          .upsert({ id, last_date:lastYMD });
+        if(error) throw error;
+      }catch(e){
+        console.error('Save error:', e);
+        alert('No se pudo guardar. Revisa políticas RLS y la API key.');
+      }
     }
 
-    // === UI ===
+    // UI
     document.getElementById('btnGen').onclick = ()=>{
       const id = crypto.randomUUID().replace(/-/g,'').slice(0,24);
       syncKeyInput.value = id;
@@ -204,6 +212,5 @@
 
     renderEstado(null);
   </script>
-
 </body>
 </html>
