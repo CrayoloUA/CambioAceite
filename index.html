@@ -22,9 +22,10 @@
     .muted{ color:var(--muted); font-size:13px; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     .row > *{ flex:1 1 180px; }
-    button, input[type="date"], input[type="text"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
+    button, input[type="date"], input[type="text"], input[type="number"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
     button{ background:var(--btn); color:white; border:none; font-weight:700; cursor:pointer; }
     button:hover{ filter:brightness(.97); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
     .small{ font-size:12px; color:#777; }
     footer{ text-align:center; padding:24px; color:#888; font-size:12px; }
   </style>
@@ -32,23 +33,10 @@
 <body>
   <header>
     <h1>Cambio de aceite 🛵</h1>
-    <div class="small">Registra el último cambio y sincroniza entre dispositivos</div>
+    <div class="small">Registra kilometraje y calcula si ya toca cambio</div>
   </header>
 
   <main>
-    <div class="card">
-      <div class="label">Clave de sincronización</div>
-      <div class="row" style="margin-top:6px;">
-        <input id="syncKey" type="text" placeholder="Tu clave secreta" />
-        <button id="btnGen">Generar clave</button>
-        <button id="btnGuardarClave" style="background:#10b981;">Guardar clave</button>
-        <button id="btnCargar" style="background:#64748b;">Cargar desde nube</button>
-      </div>
-      <div class="small" style="margin-top:8px;">
-        Usa una clave larga y secreta. Esa clave conecta tu PC y tu celular.
-      </div>
-    </div>
-
     <div class="card">
       <div class="label">Hoy</div>
       <div id="hoy" class="value mono">—</div>
@@ -56,13 +44,14 @@
 
     <div class="grid">
       <div class="card">
-        <div class="label">Último cambio registrado</div>
+        <div class="label">Último cambio</div>
         <div id="ultimo" class="value mono">—</div>
-        <div class="muted">Guardado en Supabase</div>
+        <div class="muted">Fecha + kilometraje guardados</div>
       </div>
       <div class="card">
-        <div class="label">Próximo cambio (1 mes)</div>
-        <div id="proximo" class="value mono">—</div>
+        <div class="label">Umbral de cambio</div>
+        <div id="proximo" class="value mono">3000 km</div>
+        <div id="diasMes" class="muted">Se compara contra lo recorrido</div>
       </div>
     </div>
 
@@ -70,171 +59,193 @@
       <div class="label">Estado</div>
       <div id="estado" class="status">—</div>
       <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
+      <div id="delta" class="mono" style="margin-top:8px;">—</div>
     </div>
 
-    <div class="card">
-      <div class="label">Acciones</div>
-      <div class="row" style="margin-top:6px;">
-        <button id="btnHoy">Lo cambié hoy</button>
-        <input id="fechaManual" type="date" />
-        <button id="btnGuardarFecha">Guardar fecha</button>
+    <div class="grid">
+      <div class="card">
+        <div class="label">Registrar cambio</div>
+        <div class="row" style="margin-top:6px;">
+          <input id="fechaCambio" type="date" />
+          <input id="mileageCambio" type="number" min="0" step="1" placeholder="Kilometraje (km)" />
+          <button id="btnRegistrarCambio">Registrar cambio</button>
+        </div>
+        <div class="small" style="margin-top:8px;">
+          Esto guarda el kilometraje como referencia para las revisiones.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Comparar kilometraje actual</div>
+        <div class="row" style="margin-top:6px;">
+          <input id="mileageRevision" type="number" min="0" step="1" placeholder="Kilometraje actual (km)" />
+          <button id="btnCalcular" style="background:var(--pri);">Calcular</button>
+        </div>
+        <div id="notaRevis" class="small" style="margin-top:8px;">Ingresa el nuevo kilometraje para compararlo.</div>
       </div>
     </div>
   </main>
 
-  <footer>Hecho con 💙 por Crayolo · Supabase + GitHub Pages</footer>
+  <footer>Hecho con 💙 por Crayolo · Guardado local en tu navegador</footer>
 
-  <!-- Supabase JS -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    // === CREDENCIALES ===
-    const SUPABASE_URL = "https://ajuqstopjdryagkjastd.supabase.co"; // tu URL exacta
-    const SUPABASE_PUB_KEY = "sb_publishable_NcHJkLGL9oqMJ9b2LTov8A_4McBGsRl"; // tu Publishable key (API Keys → Publishable key)
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUB_KEY);
-
-    // (Opcional) Clave fija para ti:
-    const DEFAULT_SYNC_ID = "971be5b56e614bfda6b51a45";
+    // Umbral de cambio por kilometraje (según lo que pediste)
+    const KM_UMBRAL = 3000;
 
     // === Utilidades de fechas ===
     const pad2 = n => String(n).padStart(2,'0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const fromYMD = s => { const [y,m,da]=s.split('-').map(Number); return new Date(y,m-1,da); };
-    const addMonthsClamped = (d, m) => {
-      const y=d.getFullYear(), mo=d.getMonth(), da=d.getDate();
-      const newMo = mo+m; const y2=y+Math.floor(newMo/12), m2=(newMo%12+12)%12;
-      const last=new Date(y2,m2+1,0).getDate();
-      return new Date(y2,m2,Math.min(da,last));
-    };
-    const diffDays = (a,b) => Math.floor((b-a)/86400000);
-    const formatLong = d => new Intl.DateTimeFormat('es-CO',{dateStyle:'full'}).format(d);
+    const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = (a, b) => Math.floor((startOfDay(b) - startOfDay(a)) / 86400000);
+    const formatLong = d => new Intl.DateTimeFormat('es-CO', { dateStyle: 'full' }).format(d);
 
-    function renderEstado(lastDate){
-      const hoy = new Date();
-      document.getElementById('hoy').textContent = formatLong(hoy);
+    // === Almacenamiento local ===
+    const STORAGE_KEY = 'aceite_km_state_v1';
 
-      if(!lastDate){
-        document.getElementById('ultimo').textContent = '— (sin registro)';
-        document.getElementById('proximo').textContent = '—';
-        document.getElementById('estado').textContent = 'Aún no has registrado un cambio.';
-        document.getElementById('estado').className = 'status warn';
-        document.getElementById('contador').textContent = 'Usa “Lo cambié hoy” o elige una fecha.';
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function saveState(state){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getLastChange(){
+      const st = loadState();
+      return st?.lastChange || null;
+    }
+
+    function setLastChange(lastChange){
+      saveState({ lastChange });
+    }
+
+    // === Elementos UI ===
+    const hoyEl = document.getElementById('hoy');
+    const ultimoEl = document.getElementById('ultimo');
+    const proximoEl = document.getElementById('proximo');
+    const diasMesEl = document.getElementById('diasMes');
+    const estadoEl = document.getElementById('estado');
+    const contadorEl = document.getElementById('contador');
+    const deltaEl = document.getElementById('delta');
+    const notaRevisEl = document.getElementById('notaRevis');
+
+    const fechaCambioEl = document.getElementById('fechaCambio');
+    const mileageCambioEl = document.getElementById('mileageCambio');
+    const btnRegistrarCambio = document.getElementById('btnRegistrarCambio');
+
+    const mileageRevisionEl = document.getElementById('mileageRevision');
+    const btnCalcular = document.getElementById('btnCalcular');
+
+    function parseNum(input){
+      const v = Number(String(input).replace(',', '.'));
+      return Number.isFinite(v) ? v : NaN;
+    }
+
+    function render(){
+      const now = new Date();
+      const hoy = startOfDay(now);
+      hoyEl.textContent = formatLong(hoy);
+
+      // Defaults de fechas
+      if (!fechaCambioEl.value) fechaCambioEl.value = ymd(hoy);
+      const last = getLastChange();
+      if (!last){
+        ultimoEl.textContent = '— (sin registro)';
+        proximoEl.textContent = `${KM_UMBRAL} km`;
+        diasMesEl.textContent = 'Se compara contra lo recorrido';
+        estadoEl.textContent = 'Registra tu primer cambio.';
+        estadoEl.className = 'status warn';
+        contadorEl.textContent = 'Luego podrás comparar un kilometraje nuevo.';
+        deltaEl.textContent = '—';
+        btnCalcular.disabled = true;
+        notaRevisEl.textContent = 'Primero registra el kilometraje cuando cambias el aceite.';
         return;
       }
 
-      const d = typeof lastDate==='string'?fromYMD(lastDate):lastDate;
-      document.getElementById('ultimo').textContent = `${formatLong(d)} (${ymd(d)})`;
+      const lastDate = fromYMD(last.date);
 
-      const prox = addMonthsClamped(d, 1);
-      document.getElementById('proximo').textContent = `${formatLong(prox)} (${ymd(prox)})`;
+      ultimoEl.textContent = `${formatLong(lastDate)} (${Number(last.mileage)} km)`;
+      proximoEl.textContent = `${KM_UMBRAL} km`;
+      diasMesEl.textContent = 'Se compara contra lo recorrido';
 
-      const diasHasta = diffDays(hoy, prox);
-      const diasDesde = diffDays(d, hoy);
+      const diasDesde = diffDays(lastDate, hoy);
+      estadoEl.textContent = 'Ingresa un kilometraje actual para verificar si toca cambio.';
+      estadoEl.className = 'status ok';
+      contadorEl.textContent = `Han pasado ${diasDesde} días desde el último cambio.`;
+      btnCalcular.disabled = false;
+      notaRevisEl.textContent = `Base guardada: ${Number(last.mileage)} km.`;
+    }
 
-      if(diasHasta > 0){
-        document.getElementById('estado').textContent = `Faltan ${diasHasta} días`;
-        document.getElementById('estado').className = 'status ok';
-      } else if(diasHasta === 0){
-        document.getElementById('estado').textContent = '¡Hoy toca cambiar el aceite! ✅';
-        document.getElementById('estado').className = 'status warn';
+    function clearResultado(){
+      deltaEl.textContent = '—';
+      // No tocamos estadoEl.className para no pisar la info mensual
+    }
+
+    btnRegistrarCambio.addEventListener('click', () => {
+      const dateVal = fechaCambioEl.value;
+      const mileageVal = parseNum(mileageCambioEl.value);
+
+      if (!dateVal){
+        alert('Elige la fecha del cambio.');
+        return;
+      }
+      if (!Number.isFinite(mileageVal) || mileageVal <= 0){
+        alert('Ingresa un kilometraje válido (km).');
+        return;
+      }
+
+      setLastChange({ date: dateVal, mileage: Math.round(mileageVal) });
+      clearResultado();
+      render();
+      mileageRevisionEl.value = '';
+      deltaEl.textContent = '—';
+    });
+
+    btnCalcular.addEventListener('click', () => {
+      const last = getLastChange();
+      if (!last){
+        alert('Primero registra un cambio.');
+        return;
+      }
+
+      const newMileage = parseNum(mileageRevisionEl.value);
+      if (!Number.isFinite(newMileage) || newMileage <= 0){
+        alert('Ingresa el kilometraje actual (km).');
+        return;
+      }
+
+      const oldMileage = Number(last.mileage);
+      const deltaKm = Math.round(newMileage - oldMileage);
+      if (deltaKm < 0){
+        alert('El kilometraje nuevo no puede ser menor al último registrado.');
+        return;
+      }
+
+      deltaEl.textContent = `Han transcurrido ${deltaKm} km desde el último cambio.`;
+
+      if (deltaKm >= KM_UMBRAL){
+        estadoEl.textContent = `>= ${KM_UMBRAL} km: hay que cambiar el aceite.`;
+        estadoEl.className = 'status late';
+        contadorEl.textContent = 'Recomendación basada en kilometraje.';
       } else {
-        document.getElementById('estado').textContent = `Atrasado ${Math.abs(diasHasta)} días 😬`;
-        document.getElementById('estado').className = 'status late';
+        const falta = KM_UMBRAL - deltaKm;
+        estadoEl.textContent = `Aún no: faltan ${falta} km para llegar a ${KM_UMBRAL}.`;
+        estadoEl.className = 'status ok';
+        contadorEl.textContent = 'Recomendación basada en kilometraje.';
       }
+    });
 
-      document.getElementById('contador').textContent = `Han pasado ${diasDesde} días desde el último cambio.`;
-    }
-
-    // === Supabase helpers ===
-    const KEY_LOCAL = 'aceite_sync_id';
-    const syncKeyInput = document.getElementById('syncKey');
-
-    function getSyncId(){ return localStorage.getItem(KEY_LOCAL)||''; }
-    function setSyncId(id){ localStorage.setItem(KEY_LOCAL,id); }
-
-    async function loadFromSupabase(id){
-      const { data, error } = await supabase
-        .from('aceite_changes')
-        .select('last_date')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.last_date || null;
-    }
-
-    async function saveToSupabase(id, lastYMD){
-      const { error } = await supabase
-        .from('aceite_changes')
-        .upsert({ id, last_date:lastYMD });
-
-      if (error) throw error;
-    }
-
-    // === UI ===
-    // Pre-carga: usa la fija y/o la que tengas guardada
+    // Init
     (function init(){
-      const current = getSyncId() || DEFAULT_SYNC_ID;
-      if (current) {
-        setSyncId(current);
-        syncKeyInput.value = current;
-      }
-      renderEstado(null);
+      btnCalcular.disabled = true;
+      render();
     })();
-
-    document.getElementById('btnGen').onclick = ()=>{
-      const id = crypto.randomUUID().replace(/-/g,'').slice(0,24);
-      syncKeyInput.value = id;
-    };
-
-    document.getElementById('btnGuardarClave').onclick = ()=>{
-      const id = syncKeyInput.value.trim();
-      if(id.length<6){ alert("Clave demasiado corta"); return; }
-      setSyncId(id); alert("Clave guardada");
-    };
-
-    document.getElementById('btnCargar').onclick = async ()=>{
-      const id = (syncKeyInput.value.trim() || getSyncId());
-      if(!id){ alert("Pon una clave"); return; }
-      setSyncId(id);
-      try{
-        const last = await loadFromSupabase(id);
-        renderEstado(last);
-        if(last) document.getElementById('fechaManual').value = last;
-      }catch(e){
-        console.error('Load error:', e);
-        alert('No se pudo cargar. Revisa URL/clave y que exista la tabla aceite_changes.');
-      }
-    };
-
-    document.getElementById('btnHoy').onclick = async ()=>{
-      const id = (getSyncId() || syncKeyInput.value.trim());
-      if(!id){ alert("Primero configura tu clave"); return; }
-      setSyncId(id);
-      const today = ymd(new Date());
-      try{
-        await saveToSupabase(id, today);
-        renderEstado(today);
-        document.getElementById('fechaManual').value = today;
-      }catch(e){
-        console.error('Save error (hoy):', e);
-        alert('No se pudo guardar en la nube.');
-      }
-    };
-
-    document.getElementById('btnGuardarFecha').onclick = async ()=>{
-      const id = (getSyncId() || syncKeyInput.value.trim());
-      if(!id){ alert("Primero configura tu clave"); return; }
-      const val = document.getElementById('fechaManual').value;
-      if(!val){ alert("Elige fecha"); return; }
-      setSyncId(id);
-      try{
-        await saveToSupabase(id, val);
-        renderEstado(val);
-      }catch(e){
-        console.error('Save error (fecha):', e);
-        alert('No se pudo guardar en la nube.');
-      }
-    };
   </script>
 </body>
 </html>
