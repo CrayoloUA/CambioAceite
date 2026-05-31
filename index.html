@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cambio de aceite 🛵</title>
   <style>
-    :root{ --bg:#f7f7fb; --card:#ffffff; --txt:#222; --muted:#666; --pri:#0f766e; --warn:#b45309; --late:#b91c1c; --btn:#0ea5e9; }
+    :root{ --bg:#f7f7fb; --card:#ffffff; --txt:#222; --muted:#666; --pri:#0f766e; --warn:#b45309; --late:#b91c1c; --btn:#0ea5e9; --gps:#6366f1; }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--txt); }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--txt); }
     header{ text-align:center; padding:24px 16px; }
     h1{ margin:0; font-size:clamp(20px,4vw,28px); }
     main{ max-width:760px; margin:0 auto; padding:16px; }
@@ -18,22 +18,41 @@
     .value{ font-weight:700; font-size:clamp(16px,3.6vw,22px); }
     .status{ font-size:clamp(16px,3.6vw,20px); font-weight:700; margin-top:4px; }
     .ok{ color:var(--pri); } .warn{ color:var(--warn); } .late{ color:var(--late); }
-    .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
     .muted{ color:var(--muted); font-size:13px; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
-    .row > *{ flex:1 1 180px; }
-    button, input[type="date"], input[type="text"], input[type="number"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
+    .row > *{ flex:1 1 160px; }
+    button, input[type="date"], input[type="number"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
     button{ background:var(--btn); color:white; border:none; font-weight:700; cursor:pointer; }
     button:hover{ filter:brightness(.97); }
-    button:disabled{ opacity:.6; cursor:not-allowed; }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
     .small{ font-size:12px; color:#777; }
     footer{ text-align:center; padding:24px; color:#888; font-size:12px; }
+
+    /* Barra de progreso */
+    .progress-wrap{ margin-top:14px; }
+    progress{ width:100%; height:12px; border-radius:8px; border:none; appearance:none; -webkit-appearance:none; background:#e5e7eb; }
+    progress::-webkit-progress-bar{ background:#e5e7eb; border-radius:8px; }
+    progress::-webkit-progress-value{ border-radius:8px; transition:width .4s, background .4s; }
+    progress::-moz-progress-bar{ border-radius:8px; transition:background .4s; }
+    progress.ok::-webkit-progress-value{ background:var(--pri); }
+    progress.warn::-webkit-progress-value{ background:var(--warn); }
+    progress.late::-webkit-progress-value{ background:var(--late); }
+    progress.ok::-moz-progress-bar{ background:var(--pri); }
+    progress.warn::-moz-progress-bar{ background:var(--warn); }
+    progress.late::-moz-progress-bar{ background:var(--late); }
+
+    /* Detalle km */
+    .km-detalle{ margin-top:8px; font-size:clamp(13px,2.8vw,16px); font-weight:600; font-variant-numeric:tabular-nums; }
+
+    /* Botón GPS */
+    .btn-gps{ flex:0 0 auto !important; width:auto !important; padding:12px 16px; background:var(--gps); font-size:14px; white-space:nowrap; }
   </style>
 </head>
 <body>
   <header>
     <h1>Cambio de aceite 🛵</h1>
-    <div class="small">Registra kilometraje y calcula si ya toca cambio</div>
+    <div class="small">Registra el kilometraje del odómetro y sigue cuándo toca cambio</div>
   </header>
 
   <main>
@@ -50,7 +69,7 @@
       </div>
       <div class="card">
         <div class="label">Umbral de cambio</div>
-        <div id="proximo" class="value mono">3000 km</div>
+        <div id="proximo" class="value mono">3 000 km</div>
         <div id="diasMes" class="muted">Se compara contra lo recorrido</div>
       </div>
     </div>
@@ -58,30 +77,32 @@
     <div class="card">
       <div class="label">Estado</div>
       <div id="estado" class="status">—</div>
-      <div id="contador" class="mono muted" style="margin-top:6px;">—</div>
-      <div id="delta" class="mono" style="margin-top:8px;">—</div>
+      <div class="progress-wrap">
+        <progress id="barraKm" max="100" value="0"></progress>
+      </div>
+      <div id="kmDetalle" class="km-detalle mono">—</div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div class="label">Registrar cambio</div>
+        <div class="label">Registrar cambio de aceite</div>
         <div class="row" style="margin-top:6px;">
           <input id="fechaCambio" type="date" />
-          <input id="mileageCambio" type="number" min="0" step="1" placeholder="Kilometraje (km)" />
-          <button id="btnRegistrarCambio">Registrar cambio</button>
+          <input id="mileageCambio" type="number" min="0" step="1" placeholder="Km del odómetro" />
+          <button id="btnRegistrarCambio">Guardar cambio</button>
         </div>
         <div class="small" style="margin-top:8px;">
-          Esto guarda el kilometraje como referencia para las revisiones.
+          Escribe el km del odómetro al momento del cambio. El GPS se guarda automáticamente si tienes permiso.
         </div>
       </div>
 
       <div class="card">
-        <div class="label">Comparar kilometraje actual</div>
+        <div class="label">Kilometraje actual</div>
         <div class="row" style="margin-top:6px;">
-          <input id="mileageRevision" type="number" min="0" step="1" placeholder="Kilometraje actual (km)" />
-          <button id="btnCalcular" style="background:var(--pri);">Calcular</button>
+          <input id="mileageRevision" type="number" min="0" step="1" placeholder="Km actual del odómetro" />
+          <button id="btnGPS" class="btn-gps" title="Estimar km recorridos con GPS">📍 GPS</button>
         </div>
-        <div id="notaRevis" class="small" style="margin-top:8px;">Ingresa el nuevo kilometraje para compararlo.</div>
+        <div id="notaRevis" class="small" style="margin-top:8px;">Escribe el km actual — el cálculo es automático.</div>
       </div>
     </div>
   </main>
@@ -89,161 +110,206 @@
   <footer>Hecho con 💙 por Crayolo · Guardado local en tu navegador</footer>
 
   <script>
-    // Umbral de cambio por kilometraje (según lo que pediste)
     const KM_UMBRAL = 3000;
 
-    // === Utilidades de fechas ===
     const pad2 = n => String(n).padStart(2,'0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const fromYMD = s => { const [y,m,da]=s.split('-').map(Number); return new Date(y,m-1,da); };
     const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const diffDays = (a, b) => Math.floor((startOfDay(b) - startOfDay(a)) / 86400000);
-    const formatLong = d => new Intl.DateTimeFormat('es-CO', { dateStyle: 'full' }).format(d);
+    const diffDays = (a,b) => Math.floor((startOfDay(b)-startOfDay(a))/86400000);
+    const formatLong = d => new Intl.DateTimeFormat('es-CO',{dateStyle:'full'}).format(d);
+    const fmtKm = n => new Intl.NumberFormat('es-CO').format(Math.round(n));
 
-    // === Almacenamiento local ===
+    function haversineKm(lat1, lon1, lat2, lon2){
+      const R = 6371, toRad = x => x*Math.PI/180;
+      const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return R*2*Math.asin(Math.sqrt(a));
+    }
+
     const STORAGE_KEY = 'aceite_km_state_v1';
 
     function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{
-        return null;
+      try{ const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):{}; }
+      catch{ return {}; }
+    }
+    function saveState(patch){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({...loadState(),...patch}));
+    }
+    const getLastChange = () => loadState().lastChange || null;
+    const setLastChange = lc => saveState({lastChange:lc});
+    const getCurrentMileage = () => loadState().currentMileage ?? null;
+    const setCurrentMileage = km => saveState({currentMileage:km});
+    const clearCurrentMileage = () => saveState({currentMileage:null});
+
+    const hoyEl       = document.getElementById('hoy');
+    const ultimoEl    = document.getElementById('ultimo');
+    const diasMesEl   = document.getElementById('diasMes');
+    const estadoEl    = document.getElementById('estado');
+    const barraKmEl   = document.getElementById('barraKm');
+    const kmDetalleEl = document.getElementById('kmDetalle');
+    const notaRevisEl = document.getElementById('notaRevis');
+    const fechaCambioEl   = document.getElementById('fechaCambio');
+    const mileageCambioEl = document.getElementById('mileageCambio');
+    const btnRegistrar    = document.getElementById('btnRegistrarCambio');
+    const mileageRevEl    = document.getElementById('mileageRevision');
+    const btnGPS          = document.getElementById('btnGPS');
+
+    function parseNum(v){ const n=Number(String(v).replace(',','.')); return Number.isFinite(n)?n:NaN; }
+
+    function setBar(pct, cls){
+      barraKmEl.value = Math.min(Math.max(pct,0),100);
+      barraKmEl.className = cls;
+    }
+
+    function calcularEnVivo(){
+      const last = getLastChange();
+      if(!last) return;
+
+      const newKm = parseNum(mileageRevEl.value);
+      if(!Number.isFinite(newKm) || newKm <= 0){
+        estadoEl.textContent = 'Escribe el km actual para ver el estado.';
+        estadoEl.className = 'status warn';
+        kmDetalleEl.textContent = '—';
+        setBar(0,'ok');
+        return;
+      }
+
+      const delta = newKm - Number(last.mileage);
+      if(delta < 0){
+        estadoEl.textContent = 'El km actual no puede ser menor al del último cambio.';
+        estadoEl.className = 'status late';
+        kmDetalleEl.textContent = '—';
+        setBar(0,'ok');
+        return;
+      }
+
+      const pct = (delta/KM_UMBRAL)*100;
+      const falta = KM_UMBRAL - delta;
+      setCurrentMileage(Math.round(newKm));
+
+      if(delta >= KM_UMBRAL){
+        estadoEl.textContent = '¡Hay que cambiar el aceite!';
+        estadoEl.className = 'status late';
+        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(delta-KM_UMBRAL)} km de exceso`;
+        setBar(100,'late');
+      } else if(pct >= 60){
+        estadoEl.textContent = `Pronto toca cambio — faltan ${fmtKm(falta)} km`;
+        estadoEl.className = 'status warn';
+        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
+        setBar(pct,'warn');
+      } else {
+        estadoEl.textContent = `Todo bien — faltan ${fmtKm(falta)} km`;
+        estadoEl.className = 'status ok';
+        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
+        setBar(pct,'ok');
       }
     }
 
-    function saveState(state){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function getLastChange(){
-      const st = loadState();
-      return st?.lastChange || null;
-    }
-
-    function setLastChange(lastChange){
-      saveState({ lastChange });
-    }
-
-    // === Elementos UI ===
-    const hoyEl = document.getElementById('hoy');
-    const ultimoEl = document.getElementById('ultimo');
-    const proximoEl = document.getElementById('proximo');
-    const diasMesEl = document.getElementById('diasMes');
-    const estadoEl = document.getElementById('estado');
-    const contadorEl = document.getElementById('contador');
-    const deltaEl = document.getElementById('delta');
-    const notaRevisEl = document.getElementById('notaRevis');
-
-    const fechaCambioEl = document.getElementById('fechaCambio');
-    const mileageCambioEl = document.getElementById('mileageCambio');
-    const btnRegistrarCambio = document.getElementById('btnRegistrarCambio');
-
-    const mileageRevisionEl = document.getElementById('mileageRevision');
-    const btnCalcular = document.getElementById('btnCalcular');
-
-    function parseNum(input){
-      const v = Number(String(input).replace(',', '.'));
-      return Number.isFinite(v) ? v : NaN;
-    }
-
     function render(){
-      const now = new Date();
-      const hoy = startOfDay(now);
+      const hoy = startOfDay(new Date());
       hoyEl.textContent = formatLong(hoy);
+      if(!fechaCambioEl.value) fechaCambioEl.value = ymd(hoy);
 
-      // Defaults de fechas
-      if (!fechaCambioEl.value) fechaCambioEl.value = ymd(hoy);
       const last = getLastChange();
-      if (!last){
+      if(!last){
         ultimoEl.textContent = '— (sin registro)';
-        proximoEl.textContent = `${KM_UMBRAL} km`;
         diasMesEl.textContent = 'Se compara contra lo recorrido';
-        estadoEl.textContent = 'Registra tu primer cambio.';
+        estadoEl.textContent = 'Registra tu primer cambio de aceite.';
         estadoEl.className = 'status warn';
-        contadorEl.textContent = 'Luego podrás comparar un kilometraje nuevo.';
-        deltaEl.textContent = '—';
-        btnCalcular.disabled = true;
-        notaRevisEl.textContent = 'Primero registra el kilometraje cuando cambias el aceite.';
+        kmDetalleEl.textContent = '—';
+        setBar(0,'ok');
+        mileageRevEl.disabled = true;
+        btnGPS.disabled = true;
+        notaRevisEl.textContent = 'Primero registra el km cuando cambias el aceite.';
         return;
       }
 
       const lastDate = fromYMD(last.date);
+      const dias = diffDays(lastDate, hoy);
+      ultimoEl.textContent = `${formatLong(lastDate)} · ${fmtKm(last.mileage)} km`;
+      diasMesEl.textContent = `${dias} día${dias!==1?'s':''} desde el último cambio`;
+      mileageRevEl.disabled = false;
+      btnGPS.disabled = !navigator.geolocation;
+      notaRevisEl.textContent = `Base: ${fmtKm(last.mileage)} km${last.lat?' · coordenadas GPS guardadas ✓':''}`;
 
-      ultimoEl.textContent = `${formatLong(lastDate)} (${Number(last.mileage)} km)`;
-      proximoEl.textContent = `${KM_UMBRAL} km`;
-      diasMesEl.textContent = 'Se compara contra lo recorrido';
-
-      const diasDesde = diffDays(lastDate, hoy);
-      estadoEl.textContent = 'Ingresa un kilometraje actual para verificar si toca cambio.';
-      estadoEl.className = 'status ok';
-      contadorEl.textContent = `Han pasado ${diasDesde} días desde el último cambio.`;
-      btnCalcular.disabled = false;
-      notaRevisEl.textContent = `Base guardada: ${Number(last.mileage)} km.`;
-    }
-
-    function clearResultado(){
-      deltaEl.textContent = '—';
-      // No tocamos estadoEl.className para no pisar la info mensual
-    }
-
-    btnRegistrarCambio.addEventListener('click', () => {
-      const dateVal = fechaCambioEl.value;
-      const mileageVal = parseNum(mileageCambioEl.value);
-
-      if (!dateVal){
-        alert('Elige la fecha del cambio.');
-        return;
-      }
-      if (!Number.isFinite(mileageVal) || mileageVal <= 0){
-        alert('Ingresa un kilometraje válido (km).');
-        return;
-      }
-
-      setLastChange({ date: dateVal, mileage: Math.round(mileageVal) });
-      clearResultado();
-      render();
-      mileageRevisionEl.value = '';
-      deltaEl.textContent = '—';
-    });
-
-    btnCalcular.addEventListener('click', () => {
-      const last = getLastChange();
-      if (!last){
-        alert('Primero registra un cambio.');
-        return;
-      }
-
-      const newMileage = parseNum(mileageRevisionEl.value);
-      if (!Number.isFinite(newMileage) || newMileage <= 0){
-        alert('Ingresa el kilometraje actual (km).');
-        return;
-      }
-
-      const oldMileage = Number(last.mileage);
-      const deltaKm = Math.round(newMileage - oldMileage);
-      if (deltaKm < 0){
-        alert('El kilometraje nuevo no puede ser menor al último registrado.');
-        return;
-      }
-
-      deltaEl.textContent = `Han transcurrido ${deltaKm} km desde el último cambio.`;
-
-      if (deltaKm >= KM_UMBRAL){
-        estadoEl.textContent = `>= ${KM_UMBRAL} km: hay que cambiar el aceite.`;
-        estadoEl.className = 'status late';
-        contadorEl.textContent = 'Recomendación basada en kilometraje.';
+      const saved = getCurrentMileage();
+      if(saved && saved > 0){
+        mileageRevEl.value = saved;
+        calcularEnVivo();
       } else {
-        const falta = KM_UMBRAL - deltaKm;
-        estadoEl.textContent = `Aún no: faltan ${falta} km para llegar a ${KM_UMBRAL}.`;
+        estadoEl.textContent = 'Escribe el km actual para ver el estado.';
         estadoEl.className = 'status ok';
-        contadorEl.textContent = 'Recomendación basada en kilometraje.';
+        kmDetalleEl.textContent = '—';
+        setBar(0,'ok');
+      }
+    }
+
+    mileageRevEl.addEventListener('input', calcularEnVivo);
+
+    btnRegistrar.addEventListener('click', () => {
+      const dateVal = fechaCambioEl.value;
+      const kmVal = parseNum(mileageCambioEl.value);
+      if(!dateVal){ alert('Elige la fecha del cambio.'); return; }
+      if(!Number.isFinite(kmVal)||kmVal<=0){ alert('Ingresa un kilometraje válido.'); return; }
+
+      const data = { date:dateVal, mileage:Math.round(kmVal) };
+
+      function guardar(coords){
+        if(coords){ data.lat=coords.latitude; data.lon=coords.longitude; }
+        setLastChange(data);
+        clearCurrentMileage();
+        mileageCambioEl.value='';
+        mileageRevEl.value='';
+        render();
+      }
+
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          pos => guardar(pos.coords),
+          ()  => guardar(null),
+          {timeout:5000}
+        );
+      } else {
+        guardar(null);
       }
     });
 
-    // Init
+    btnGPS.addEventListener('click', () => {
+      const last = getLastChange();
+      if(!last) return;
+
+      if(!last.lat||!last.lon){
+        notaRevisEl.textContent = 'El último cambio no tiene coordenadas GPS. Registra un cambio nuevo con GPS activo para usar esta función.';
+        return;
+      }
+
+      btnGPS.disabled = true;
+      btnGPS.textContent = '📍…';
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const linea = haversineKm(last.lat, last.lon, pos.coords.latitude, pos.coords.longitude);
+          const est = Math.round(last.mileage + linea * 1.3);
+          mileageRevEl.value = est;
+          notaRevisEl.textContent = `GPS: ~${fmtKm(linea*1.3)} km estimados en ruta (±30%) — verifica con el odómetro`;
+          calcularEnVivo();
+          btnGPS.disabled = false;
+          btnGPS.textContent = '📍 GPS';
+        },
+        err => {
+          const msgs = {1:'Permiso de ubicación denegado.',3:'Tiempo de espera agotado.'};
+          notaRevisEl.textContent = (msgs[err.code]||'No se pudo obtener la ubicación.')+' Ingresa el km manualmente.';
+          btnGPS.disabled = false;
+          btnGPS.textContent = '📍 GPS';
+        },
+        {enableHighAccuracy:true, timeout:10000}
+      );
+    });
+
     (function init(){
-      btnCalcular.disabled = true;
+      mileageRevEl.disabled = true;
+      btnGPS.disabled = true;
       render();
     })();
   </script>
