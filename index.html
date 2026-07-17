@@ -2,115 +2,371 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cambio de aceite 🛵</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f4f3f1" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#101317" media="(prefers-color-scheme: dark)" />
+  <title>Cambio de aceite</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Aceite" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <style>
-    :root{ --bg:#f7f7fb; --card:#ffffff; --txt:#222; --muted:#666; --pri:#0f766e; --warn:#b45309; --late:#b91c1c; --btn:#0ea5e9; --gps:#6366f1; }
-    *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--txt); }
-    header{ text-align:center; padding:24px 16px; }
-    h1{ margin:0; font-size:clamp(20px,4vw,28px); }
-    main{ max-width:760px; margin:0 auto; padding:16px; }
-    .card{ background:var(--card); border-radius:16px; padding:16px; margin:12px 0; box-shadow:0 8px 24px rgba(0,0,0,.06); }
-    .grid{ display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .grid > .card{ margin:0; }
-    .label{ color:var(--muted); font-size:13px; }
-    .value{ font-weight:700; font-size:clamp(16px,3.6vw,22px); }
-    .status{ font-size:clamp(16px,3.6vw,20px); font-weight:700; margin-top:4px; }
-    .ok{ color:var(--pri); } .warn{ color:var(--warn); } .late{ color:var(--late); }
-    .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-    .muted{ color:var(--muted); font-size:13px; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; }
-    .row > *{ flex:1 1 160px; }
-    button, input[type="date"], input[type="number"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
-    button{ background:var(--btn); color:white; border:none; font-weight:700; cursor:pointer; }
-    button:hover{ filter:brightness(.97); }
-    button:disabled{ opacity:.5; cursor:not-allowed; }
-    .small{ font-size:12px; color:#777; }
-    footer{ text-align:center; padding:24px; color:#888; font-size:12px; }
+    :root{
+      --bg: oklch(97% 0.006 250);
+      --surface: oklch(99% 0.004 250);
+      --surface-2: oklch(93% 0.01 250);
+      --text: oklch(24% 0.015 250);
+      --text-muted: oklch(46% 0.015 250);
+      --border: oklch(87% 0.012 250);
 
-    /* Barra de progreso */
-    .progress-wrap{ margin-top:14px; }
-    progress{ width:100%; height:12px; border-radius:8px; border:none; appearance:none; -webkit-appearance:none; background:#e5e7eb; }
-    progress::-webkit-progress-bar{ background:#e5e7eb; border-radius:8px; }
-    progress::-webkit-progress-value{ border-radius:8px; transition:width .4s, background .4s; }
-    progress::-moz-progress-bar{ border-radius:8px; transition:background .4s; }
-    progress.ok::-webkit-progress-value{ background:var(--pri); }
-    progress.warn::-webkit-progress-value{ background:var(--warn); }
-    progress.late::-webkit-progress-value{ background:var(--late); }
-    progress.ok::-moz-progress-bar{ background:var(--pri); }
-    progress.warn::-moz-progress-bar{ background:var(--warn); }
-    progress.late::-moz-progress-bar{ background:var(--late); }
+      --accent: oklch(56% 0.16 235);
+      --accent-text: oklch(99% 0.005 235);
+      --ok: oklch(50% 0.13 165);
+      --ok-text: oklch(99% 0.01 165);
+      --warn: oklch(60% 0.16 70);
+      --warn-text: oklch(20% 0.03 70);
+      --late: oklch(54% 0.19 25);
+      --late-text: oklch(99% 0.01 25);
+      --gps: oklch(53% 0.15 290);
+      --gps-text: oklch(99% 0.01 290);
+      --danger: oklch(54% 0.19 25);
 
-    /* Detalle km */
-    .km-detalle{ margin-top:8px; font-size:clamp(13px,2.8vw,16px); font-weight:600; font-variant-numeric:tabular-nums; }
+      /* El panel de estado siempre imita un tablero digital de moto: oscuro sin importar el tema */
+      --gauge-bg: oklch(20% 0.02 250);
+      --gauge-border: oklch(31% 0.02 250);
+      --gauge-track: oklch(28% 0.02 250);
+      --gauge-muted: oklch(68% 0.02 250);
+      --gauge-ok: oklch(78% 0.15 165);
+      --gauge-warn: oklch(80% 0.16 75);
+      --gauge-late: oklch(70% 0.2 25);
 
-    /* Botón GPS */
-    .btn-gps{ flex:0 0 auto !important; width:auto !important; padding:12px 16px; background:var(--gps); font-size:14px; white-space:nowrap; }
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg: oklch(17% 0.014 250);
+        --surface: oklch(21% 0.016 250);
+        --surface-2: oklch(26% 0.018 250);
+        --text: oklch(93% 0.008 250);
+        --text-muted: oklch(65% 0.014 250);
+        --border: oklch(33% 0.02 250);
+
+        --accent: oklch(72% 0.15 230);
+        --accent-text: oklch(14% 0.02 230);
+        --ok: oklch(72% 0.13 165);
+        --ok-text: oklch(14% 0.02 165);
+        --warn: oklch(76% 0.15 75);
+        --warn-text: oklch(18% 0.03 75);
+        --late: oklch(68% 0.19 25);
+        --late-text: oklch(14% 0.02 25);
+        --gps: oklch(72% 0.14 285);
+        --gps-text: oklch(14% 0.02 285);
+        --danger: oklch(68% 0.19 25);
+
+        --gauge-bg: oklch(12% 0.018 250);
+        --gauge-border: oklch(27% 0.02 250);
+        --gauge-track: oklch(21% 0.02 250);
+        --gauge-muted: oklch(60% 0.02 250);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html{ -webkit-text-size-adjust:100%; }
+    body{
+      margin:0;
+      font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-tap-highlight-color:transparent;
+      padding-bottom:calc(24px + var(--safe-b));
+    }
+
+    :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+
+    .icon{ width:18px; height:18px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+    /* ---- Banner de aviso ---- */
+    #banner{
+      display:none; position:sticky; top:0; z-index:30;
+      padding:calc(12px + var(--safe-t)) 16px 12px;
+      gap:10px; align-items:flex-start;
+      font-size:14px; font-weight:600; line-height:1.35;
+    }
+    #banner.show{ display:flex; }
+    #banner.warn{ background:var(--warn); color:var(--warn-text); }
+    #banner.late{ background:var(--late); color:var(--late-text); }
+    #banner .icon{ margin-top:1px; }
+    #bannerMsg{ flex:1; }
+    #btnCerrarBanner{
+      flex:0 0 auto; width:auto; padding:6px 12px; font-size:12.5px; font-weight:700;
+      background:color-mix(in oklch, currentColor 18%, transparent);
+      color:inherit; border:none; border-radius:999px;
+    }
+
+    /* ---- App bar ---- */
+    .appbar{ display:flex; align-items:center; gap:12px; padding:calc(20px + var(--safe-t)) 20px 6px; }
+    .appbar-icon{ width:30px; height:30px; color:var(--accent); stroke-width:1.6; }
+    .appbar h1{ margin:0; font-size:20px; font-weight:800; letter-spacing:-.01em; }
+    .appbar p{ margin:2px 0 0; font-size:12.5px; color:var(--text-muted); }
+
+    main{ max-width:480px; margin:0 auto; padding:12px 16px 0; }
+
+    /* ---- Panel de estado (tablero digital) ---- */
+    .gauge{
+      background:var(--gauge-bg);
+      border-radius:20px;
+      padding:20px 18px 22px;
+      margin:10px 0 22px;
+      box-shadow:inset 0 0 0 1px var(--gauge-border), inset 0 2px 14px rgba(0,0,0,.45);
+    }
+    .gauge-status{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-weight:700; letter-spacing:.2px;
+      font-size:clamp(17px,5vw,20px);
+      color:var(--gauge-muted);
+      transition:color .35s ease;
+    }
+    .gauge-status.ok{ color:var(--gauge-ok); text-shadow:0 0 16px color-mix(in oklch, var(--gauge-ok) 45%, transparent); }
+    .gauge-status.warn{ color:var(--gauge-warn); text-shadow:0 0 16px color-mix(in oklch, var(--gauge-warn) 45%, transparent); }
+    .gauge-status.late{ color:var(--gauge-late); text-shadow:0 0 16px color-mix(in oklch, var(--gauge-late) 45%, transparent); }
+
+    .gauge-bar-track{ position:relative; height:10px; border-radius:999px; background:var(--gauge-track); overflow:hidden; margin-top:18px; }
+    .gauge-bar-fill{
+      position:absolute; inset:0; width:100%;
+      transform-origin:left center; transform:scaleX(0);
+      border-radius:999px;
+      transition:transform .6s var(--ease-out-expo), background-color .3s ease;
+    }
+    .gauge-bar-fill.ok{ background:var(--gauge-ok); box-shadow:0 0 10px color-mix(in oklch, var(--gauge-ok) 55%, transparent); }
+    .gauge-bar-fill.warn{ background:var(--gauge-warn); box-shadow:0 0 10px color-mix(in oklch, var(--gauge-warn) 55%, transparent); }
+    .gauge-bar-fill.late{ background:var(--gauge-late); box-shadow:0 0 10px color-mix(in oklch, var(--gauge-late) 55%, transparent); }
+
+    .gauge-detail{
+      margin-top:12px; font-size:13.5px; color:var(--gauge-muted);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* ---- Franja de metadatos (hoy / último cambio) ---- */
+    .meta-strip{ display:flex; gap:16px; padding:2px 2px 14px; border-bottom:1px solid var(--border); }
+    .meta-strip > div{ flex:1; min-width:0; }
+    .meta-label{ display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-bottom:3px; }
+    .meta-value{ display:block; font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; overflow-wrap:break-word; }
+    .meta-caption{ margin:8px 2px 0; font-size:12.5px; color:var(--text-muted); }
+
+    /* ---- Bloques de sección ---- */
+    .block{ padding:20px 2px; border-bottom:1px solid var(--border); }
+    .block:last-of-type{ border-bottom:none; }
+    .block-title{ margin:0 0 12px; font-size:14.5px; font-weight:700; }
+    .block-header-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .block-header-row .block-title{ margin:0; }
+    .badge{
+      font-size:11.5px; font-weight:700; color:var(--text-muted); background:var(--surface-2);
+      border-radius:999px; padding:2px 9px; font-variant-numeric:tabular-nums;
+    }
+
+    .field-label{ display:block; font-size:12.5px; font-weight:600; color:var(--text-muted); margin:14px 0 6px; }
+    .field-label:first-of-type{ margin-top:0; }
+
+    input[type="date"], input[type="number"]{
+      width:100%; padding:13px 14px; border-radius:12px; border:1px solid var(--border);
+      font-size:16px; background:var(--surface); color:var(--text);
+      font-variant-numeric:tabular-nums;
+    }
+    input::placeholder{ color:var(--text-muted); }
+
+    .input-with-action{ display:flex; gap:8px; align-items:stretch; }
+    .input-with-action input{ flex:1; min-width:0; }
+
+    button{ font:inherit; cursor:pointer; }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+    button:active:not(:disabled){ transform:scale(.97); }
+
+    button.primary{
+      width:100%; margin-top:14px; padding:14px; border-radius:12px; border:none;
+      background:var(--accent); color:var(--accent-text); font-weight:700; font-size:15.5px;
+      transition:transform .15s var(--ease-out-expo);
+    }
+    button.secondary{
+      width:100%; padding:13px; border-radius:12px; border:1px solid var(--border);
+      background:transparent; color:var(--text); font-weight:600; font-size:14px;
+      transition:transform .15s var(--ease-out-expo), border-color .2s ease;
+    }
+    button.secondary + button.secondary{ margin-top:10px; }
+    button.secondary:hover{ border-color:var(--accent); }
+    button.reminder{ border-color:var(--accent); color:var(--accent); }
+
+    .reminder-block{ background:var(--surface-2); border-radius:16px; padding:16px; margin:0 -2px 4px; border-bottom:none; }
+    .reminder-block .block-title{ display:flex; align-items:center; gap:8px; }
+    .reminder-block .block-title .icon{ color:var(--accent); width:17px; height:17px; }
+
+    .icon-btn{
+      flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:0 16px;
+      border-radius:12px; border:none; font-weight:700; font-size:13.5px; white-space:nowrap;
+      transition:transform .15s var(--ease-out-expo);
+    }
+    .icon-btn.gps{ background:var(--gps); color:var(--gps-text); }
+
+    .hint{ margin:10px 2px 0; font-size:12.5px; color:var(--text-muted); }
+
+    /* ---- Ajustes ---- */
+    .settings-row{ display:flex; gap:14px; }
+    .settings-row > div{ flex:1; min-width:0; }
+    .settings-row .field-label{ margin-top:0; }
+
+    /* ---- Historial ---- */
+    #historialLista{ list-style:none; margin:0; padding:0; }
+    #historialLista li{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 2px; border-top:1px solid var(--border);
+    }
+    #historialLista li:first-child{ border-top:none; }
+    .hist-info .fecha{ font-weight:600; font-size:14px; }
+    .hist-info .km{ color:var(--text-muted); font-size:13px; margin-top:2px; }
+    .hist-del{
+      flex:0 0 auto; display:flex; align-items:center; gap:5px; padding:7px 11px;
+      border-radius:10px; border:1px solid var(--border); background:transparent;
+      color:var(--danger); font-size:12.5px; font-weight:600;
+    }
+    .hist-del:hover{ border-color:var(--danger); }
+
+    /* ---- Detalles / respaldo ---- */
+    details.block summary{
+      list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+      font-size:14.5px; font-weight:700;
+    }
+    details.block summary::-webkit-details-marker{ display:none; }
+    details.block summary::after{
+      content:''; width:9px; height:9px; border-right:2px solid var(--text-muted); border-bottom:2px solid var(--text-muted);
+      transform:rotate(-45deg); transition:transform .25s var(--ease-out-expo); margin-right:4px;
+    }
+    details.block[open] summary::after{ transform:rotate(45deg); }
+    .details-content{ padding-top:16px; }
+
+    footer{ text-align:center; padding:26px 16px calc(10px + var(--safe-b)); color:var(--text-muted); font-size:12px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Cambio de aceite 🛵</h1>
-    <div class="small">Registra el kilometraje del odómetro y sigue cuándo toca cambio</div>
+  <div id="banner" role="alert">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9.5v5"/><path d="M12 17.5h.01"/></svg>
+    <span id="bannerMsg"></span>
+    <button id="btnCerrarBanner" type="button">Cerrar</button>
+  </div>
+
+  <header class="appbar">
+    <svg class="appbar-icon icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="6" cy="17" r="3.2"/><circle cx="18" cy="17" r="3.2"/>
+      <path d="M6 17 10 8.5h5l3.2 4.5M13.2 8.5l1.6-2.6h3.4"/>
+    </svg>
+    <div class="appbar-text">
+      <h1>Cambio de aceite</h1>
+      <p>Odómetro y próximo cambio</p>
+    </div>
   </header>
 
   <main>
-    <div class="card">
-      <div class="label">Hoy</div>
-      <div id="hoy" class="value mono">—</div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="label">Último cambio</div>
-        <div id="ultimo" class="value mono">—</div>
-        <div class="muted">Fecha + kilometraje guardados</div>
+    <section class="gauge" aria-live="polite">
+      <div id="estado" class="gauge-status">—</div>
+      <div class="gauge-bar-track" id="barraTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="gauge-bar-fill ok" id="barraFill"></div>
       </div>
-      <div class="card">
-        <div class="label">Umbral de cambio</div>
-        <div id="proximo" class="value mono">3 000 km</div>
-        <div id="diasMes" class="muted">Se compara contra lo recorrido</div>
+      <div id="kmDetalle" class="gauge-detail">—</div>
+    </section>
+
+    <div class="meta-strip">
+      <div>
+        <span class="meta-label">Hoy</span>
+        <span id="hoy" class="meta-value">—</span>
+      </div>
+      <div>
+        <span class="meta-label">Último cambio</span>
+        <span id="ultimo" class="meta-value">—</span>
       </div>
     </div>
+    <p id="diasMes" class="meta-caption">Se compara contra lo recorrido</p>
 
-    <div class="card">
-      <div class="label">Estado</div>
-      <div id="estado" class="status">—</div>
-      <div class="progress-wrap">
-        <progress id="barraKm" max="100" value="0"></progress>
+    <section class="block reminder-block">
+      <h2 class="block-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        Recordatorio en tu calendario
+      </h2>
+      <p class="hint" id="reminderText" style="margin-top:0;">—</p>
+      <button id="btnRecordatorio" class="secondary reminder" type="button" disabled>Agregar recordatorio al calendario</button>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Registrar cambio de aceite</h2>
+
+      <label class="field-label" for="fechaCambio">Fecha del cambio</label>
+      <input id="fechaCambio" type="date" />
+
+      <label class="field-label" for="mileageCambio">Km del odómetro</label>
+      <input id="mileageCambio" type="number" min="0" step="1" placeholder="p. ej. 15000" />
+
+      <button id="btnRegistrarCambio" class="primary" type="button">Guardar cambio</button>
+      <p class="hint">El GPS se guarda automáticamente si das permiso de ubicación.</p>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Kilometraje actual</h2>
+
+      <label class="field-label" for="mileageRevision">Km actual del odómetro</label>
+      <div class="input-with-action">
+        <input id="mileageRevision" type="number" min="0" step="1" placeholder="p. ej. 17200" />
+        <button id="btnGPS" class="icon-btn gps" title="Estimar km recorridos con GPS" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-7.4-7-12a7 7 0 0 1 14 0c0 4.6-7 12-7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>
+          <span id="btnGPSLabel">GPS</span>
+        </button>
       </div>
-      <div id="kmDetalle" class="km-detalle mono">—</div>
-    </div>
+      <p id="notaRevis" class="hint">Escribe el km actual — el cálculo es automático.</p>
+    </section>
 
-    <div class="grid">
-      <div class="card">
-        <div class="label">Registrar cambio de aceite</div>
-        <div class="row" style="margin-top:6px;">
-          <input id="fechaCambio" type="date" />
-          <input id="mileageCambio" type="number" min="0" step="1" placeholder="Km del odómetro" />
-          <button id="btnRegistrarCambio">Guardar cambio</button>
+    <section class="block">
+      <h2 class="block-title">Ajustes de umbral</h2>
+      <div class="settings-row">
+        <div>
+          <label class="field-label" for="umbralKm">Km para cambio</label>
+          <input id="umbralKm" type="number" min="500" step="100" />
         </div>
-        <div class="small" style="margin-top:8px;">
-          Escribe el km del odómetro al momento del cambio. El GPS se guarda automáticamente si tienes permiso.
+        <div>
+          <label class="field-label" for="umbralMeses">Meses máximo</label>
+          <input id="umbralMeses" type="number" min="1" step="1" />
         </div>
       </div>
+    </section>
 
-      <div class="card">
-        <div class="label">Kilometraje actual</div>
-        <div class="row" style="margin-top:6px;">
-          <input id="mileageRevision" type="number" min="0" step="1" placeholder="Km actual del odómetro" />
-          <button id="btnGPS" class="btn-gps" title="Estimar km recorridos con GPS">📍 GPS</button>
-        </div>
-        <div id="notaRevis" class="small" style="margin-top:8px;">Escribe el km actual — el cálculo es automático.</div>
+    <section class="block">
+      <div class="block-header-row">
+        <h2 class="block-title">Historial</h2>
+        <span id="historialCount" class="badge">0</span>
       </div>
-    </div>
+      <ul id="historialLista"></ul>
+      <p id="historialVacio" class="hint">Aún no hay cambios registrados.</p>
+    </section>
+
+    <details class="block">
+      <summary>Copia de seguridad</summary>
+      <div class="details-content">
+        <button id="btnExportar" class="secondary" type="button">Exportar JSON</button>
+        <button id="btnImportarTrigger" class="secondary" type="button">Importar JSON</button>
+        <input id="inputImportar" type="file" accept="application/json" style="display:none" />
+        <p class="hint">Exporta tus datos para guardarlos o pásalos a otro dispositivo.</p>
+      </div>
+    </details>
   </main>
 
-  <footer>Hecho con 💙 por Crayolo · Guardado local en tu navegador</footer>
+  <footer>Hecho por Crayolo · Guardado local en tu navegador</footer>
 
   <script>
-    const KM_UMBRAL = 3000;
+    const DEFAULT_KM_UMBRAL = 3000;
+    const DEFAULT_MESES_UMBRAL = 6;
 
     const pad2 = n => String(n).padStart(2,'0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -118,6 +374,7 @@
     const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const diffDays = (a,b) => Math.floor((startOfDay(b)-startOfDay(a))/86400000);
     const formatLong = d => new Intl.DateTimeFormat('es-CO',{dateStyle:'full'}).format(d);
+    const formatShort = d => new Intl.DateTimeFormat('es-CO',{dateStyle:'medium'}).format(d);
     const fmtKm = n => new Intl.NumberFormat('es-CO').format(Math.round(n));
 
     function haversineKm(lat1, lon1, lat2, lon2){
@@ -126,6 +383,8 @@
       const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
       return R*2*Math.asin(Math.sqrt(a));
     }
+
+    const addMonths = (d,n) => { const r=new Date(d); r.setMonth(r.getMonth()+n); return r; };
 
     const STORAGE_KEY = 'aceite_km_state_v1';
 
@@ -141,12 +400,30 @@
     const getCurrentMileage = () => loadState().currentMileage ?? null;
     const setCurrentMileage = km => saveState({currentMileage:km});
     const clearCurrentMileage = () => saveState({currentMileage:null});
+    const getKmUmbral = () => loadState().kmUmbral ?? DEFAULT_KM_UMBRAL;
+    const setKmUmbral = v => saveState({kmUmbral:v});
+    const getMesesUmbral = () => loadState().mesesUmbral ?? DEFAULT_MESES_UMBRAL;
+    const setMesesUmbral = v => saveState({mesesUmbral:v});
+    const getHistory = () => loadState().history || [];
+    const setHistory = h => saveState({history:h});
 
+    // Migración: si hay lastChange pero no historial, sembrar el historial con ese registro
+    (function migrar(){
+      const s = loadState();
+      if(s.lastChange && !s.history){
+        saveState({history:[s.lastChange]});
+      }
+    })();
+
+    const bannerEl      = document.getElementById('banner');
+    const bannerMsgEl   = document.getElementById('bannerMsg');
+    const btnCerrarBanner = document.getElementById('btnCerrarBanner');
     const hoyEl       = document.getElementById('hoy');
     const ultimoEl    = document.getElementById('ultimo');
     const diasMesEl   = document.getElementById('diasMes');
     const estadoEl    = document.getElementById('estado');
-    const barraKmEl   = document.getElementById('barraKm');
+    const barraTrackEl = document.getElementById('barraTrack');
+    const barraFillEl  = document.getElementById('barraFill');
     const kmDetalleEl = document.getElementById('kmDetalle');
     const notaRevisEl = document.getElementById('notaRevis');
     const fechaCambioEl   = document.getElementById('fechaCambio');
@@ -154,12 +431,105 @@
     const btnRegistrar    = document.getElementById('btnRegistrarCambio');
     const mileageRevEl    = document.getElementById('mileageRevision');
     const btnGPS          = document.getElementById('btnGPS');
+    const btnGPSLabelEl   = document.getElementById('btnGPSLabel');
+    const umbralKmEl      = document.getElementById('umbralKm');
+    const umbralMesesEl   = document.getElementById('umbralMeses');
+    const historialListaEl = document.getElementById('historialLista');
+    const historialVacioEl = document.getElementById('historialVacio');
+    const historialCountEl = document.getElementById('historialCount');
+    const btnExportar     = document.getElementById('btnExportar');
+    const btnImportarTrigger = document.getElementById('btnImportarTrigger');
+    const inputImportar   = document.getElementById('inputImportar');
+    const reminderTextEl  = document.getElementById('reminderText');
+    const btnRecordatorio = document.getElementById('btnRecordatorio');
 
     function parseNum(v){ const n=Number(String(v).replace(',','.')); return Number.isFinite(n)?n:NaN; }
 
+    // --- Estimación de la próxima fecha de cambio ---
+    // Combina el tope por meses con una proyección por ritmo real de uso (km/día
+    // promedio entre el primer y el último registro del historial), y usa la que
+    // ocurra primero. Así, si manejas mucho, el recordatorio se adelanta solo.
+    function estimarProximaFecha(){
+      const last = getLastChange();
+      if(!last) return null;
+
+      const lastDate = fromYMD(last.date);
+      const porMeses = addMonths(lastDate, getMesesUmbral());
+
+      const hist = getHistory().slice().sort((a,b) => fromYMD(a.date)-fromYMD(b.date));
+      let porKm = null;
+      if(hist.length >= 2){
+        const primero = hist[0], ultimo = hist[hist.length-1];
+        const dias = diffDays(fromYMD(primero.date), fromYMD(ultimo.date));
+        const kmRecorridos = Number(ultimo.mileage) - Number(primero.mileage);
+        if(dias > 0 && kmRecorridos > 0){
+          const kmPorDia = kmRecorridos / dias;
+          const diasParaUmbral = Math.ceil(getKmUmbral() / kmPorDia);
+          porKm = new Date(lastDate);
+          porKm.setDate(porKm.getDate() + diasParaUmbral);
+        }
+      }
+
+      return (porKm && porKm.getTime() < porMeses.getTime()) ? porKm : porMeses;
+    }
+
+    function icsFecha(d, h, m){
+      return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}T${pad2(h)}${pad2(m)}00`;
+    }
+
+    function descargarRecordatorio(){
+      const fecha = estimarProximaFecha();
+      if(!fecha) return;
+
+      const dtStart = icsFecha(fecha, 9, 0);
+      const dtEnd = icsFecha(fecha, 9, 30);
+      const now = icsFecha(new Date(), new Date().getHours(), new Date().getMinutes());
+      const uid = `aceite-${dtStart}@cambio-aceite.local`;
+
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//CambioAceite//ES',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${now}Z`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        'SUMMARY:Cambio de aceite',
+        'DESCRIPTION:Toca revisar el odometro y probablemente cambiar el aceite.',
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Cambio de aceite en 3 dias',
+        'TRIGGER:-P3D',
+        'END:VALARM',
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Cambio de aceite hoy',
+        'TRIGGER:PT0M',
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cambio-aceite-recordatorio.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    btnRecordatorio.addEventListener('click', descargarRecordatorio);
+
     function setBar(pct, cls){
-      barraKmEl.value = Math.min(Math.max(pct,0),100);
-      barraKmEl.className = cls;
+      const clamped = Math.min(Math.max(pct,0),100);
+      barraFillEl.style.transform = `scaleX(${clamped/100})`;
+      barraFillEl.className = 'gauge-bar-fill ' + cls;
+      barraTrackEl.setAttribute('aria-valuenow', Math.round(clamped));
     }
 
     function calcularEnVivo(){
@@ -169,7 +539,7 @@
       const newKm = parseNum(mileageRevEl.value);
       if(!Number.isFinite(newKm) || newKm <= 0){
         estadoEl.textContent = 'Escribe el km actual para ver el estado.';
-        estadoEl.className = 'status warn';
+        estadoEl.className = 'gauge-status warn';
         kmDetalleEl.textContent = '—';
         setBar(0,'ok');
         return;
@@ -178,50 +548,196 @@
       const delta = newKm - Number(last.mileage);
       if(delta < 0){
         estadoEl.textContent = 'El km actual no puede ser menor al del último cambio.';
-        estadoEl.className = 'status late';
+        estadoEl.className = 'gauge-status late';
         kmDetalleEl.textContent = '—';
         setBar(0,'ok');
         return;
       }
 
-      const pct = (delta/KM_UMBRAL)*100;
-      const falta = KM_UMBRAL - delta;
+      const umbral = getKmUmbral();
+      const pct = (delta/umbral)*100;
+      const falta = umbral - delta;
       setCurrentMileage(Math.round(newKm));
 
-      if(delta >= KM_UMBRAL){
+      if(delta >= umbral){
         estadoEl.textContent = '¡Hay que cambiar el aceite!';
-        estadoEl.className = 'status late';
-        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(delta-KM_UMBRAL)} km de exceso`;
+        estadoEl.className = 'gauge-status late';
+        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(delta-umbral)} km de exceso`;
         setBar(100,'late');
       } else if(pct >= 60){
         estadoEl.textContent = `Pronto toca cambio — faltan ${fmtKm(falta)} km`;
-        estadoEl.className = 'status warn';
+        estadoEl.className = 'gauge-status warn';
         kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
         setBar(pct,'warn');
       } else {
         estadoEl.textContent = `Todo bien — faltan ${fmtKm(falta)} km`;
-        estadoEl.className = 'status ok';
+        estadoEl.className = 'gauge-status ok';
         kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
         setBar(pct,'ok');
       }
+
+      checkBanner();
     }
+
+    // --- Banner de aviso visual ---
+    function checkBanner(){
+      const last = getLastChange();
+      if(!last){ bannerEl.className=''; return; }
+      if(sessionStorage.getItem('bannerDismissed')==='1') return;
+
+      const hoy = startOfDay(new Date());
+      const dias = diffDays(fromYMD(last.date), hoy);
+      const diasLimite = getMesesUmbral()*30;
+      const mensajes = [];
+      let nivel = null;
+
+      if(dias >= diasLimite){
+        mensajes.push(`Han pasado ${dias} días (~${(dias/30).toFixed(1)} meses) desde tu último cambio.`);
+        nivel = 'late';
+      }
+
+      const saved = getCurrentMileage();
+      if(saved && saved > 0){
+        const delta = saved - Number(last.mileage);
+        if(delta >= getKmUmbral()){
+          mensajes.push(`Ya recorriste ${fmtKm(delta)} km desde el último cambio.`);
+          nivel = 'late';
+        }
+      }
+
+      if(mensajes.length){
+        bannerMsgEl.textContent = mensajes.join(' ');
+        bannerEl.className = 'show ' + (nivel||'warn');
+      } else {
+        bannerEl.className = '';
+      }
+    }
+
+    btnCerrarBanner.addEventListener('click', () => {
+      bannerEl.className = '';
+      sessionStorage.setItem('bannerDismissed','1');
+    });
+
+    // --- Historial ---
+    function renderHistorial(){
+      const hist = getHistory().slice().sort((a,b) => fromYMD(b.date) - fromYMD(a.date) || Number(b.mileage)-Number(a.mileage));
+      historialListaEl.innerHTML = '';
+      historialCountEl.textContent = hist.length;
+
+      if(!hist.length){
+        historialVacioEl.style.display = 'block';
+        return;
+      }
+      historialVacioEl.style.display = 'none';
+
+      hist.forEach(item => {
+        const li = document.createElement('li');
+        const info = document.createElement('div');
+        info.className = 'hist-info';
+        info.innerHTML = `<div class="fecha">${formatShort(fromYMD(item.date))}</div><div class="km">${fmtKm(item.mileage)} km${item.lat?' · con GPS':''}</div>`;
+        const btnDel = document.createElement('button');
+        btnDel.className = 'hist-del';
+        btnDel.type = 'button';
+        btnDel.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg><span>Eliminar</span>`;
+        btnDel.addEventListener('click', () => eliminarDelHistorial(item));
+        li.appendChild(info);
+        li.appendChild(btnDel);
+        historialListaEl.appendChild(li);
+      });
+    }
+
+    function eliminarDelHistorial(item){
+      if(!confirm(`¿Eliminar el registro del ${formatShort(fromYMD(item.date))} (${fmtKm(item.mileage)} km)?`)) return;
+      let hist = getHistory();
+      hist = hist.filter(h => !(h.date===item.date && Number(h.mileage)===Number(item.mileage)));
+      setHistory(hist);
+
+      if(hist.length){
+        const nuevoUltimo = hist.reduce((a,b) => Number(b.mileage) > Number(a.mileage) ? b : a);
+        setLastChange(nuevoUltimo);
+      } else {
+        saveState({lastChange:null});
+      }
+      clearCurrentMileage();
+      render();
+    }
+
+    // --- Ajustes de umbral ---
+    umbralKmEl.addEventListener('change', () => {
+      const v = parseNum(umbralKmEl.value);
+      if(Number.isFinite(v) && v > 0) setKmUmbral(Math.round(v));
+      else umbralKmEl.value = getKmUmbral();
+      calcularEnVivo();
+      checkBanner();
+    });
+    umbralMesesEl.addEventListener('change', () => {
+      const v = parseNum(umbralMesesEl.value);
+      if(Number.isFinite(v) && v > 0) setMesesUmbral(Math.round(v));
+      else umbralMesesEl.value = getMesesUmbral();
+      checkBanner();
+    });
+
+    // --- Exportar / Importar ---
+    btnExportar.addEventListener('click', () => {
+      const data = loadState();
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cambio-aceite-backup-${ymd(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    btnImportarTrigger.addEventListener('click', () => inputImportar.click());
+
+    inputImportar.addEventListener('change', () => {
+      const file = inputImportar.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          if(typeof parsed !== 'object' || parsed===null) throw new Error('Formato inválido');
+          if(!confirm('Esto reemplazará tus datos actuales con el archivo importado. ¿Continuar?')) return;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          sessionStorage.removeItem('bannerDismissed');
+          render();
+          alert('Datos importados correctamente.');
+        }catch(e){
+          alert('El archivo no es un respaldo válido.');
+        }finally{
+          inputImportar.value = '';
+        }
+      };
+      reader.readAsText(file);
+    });
 
     function render(){
       const hoy = startOfDay(new Date());
       hoyEl.textContent = formatLong(hoy);
       if(!fechaCambioEl.value) fechaCambioEl.value = ymd(hoy);
 
+      umbralKmEl.value = getKmUmbral();
+      umbralMesesEl.value = getMesesUmbral();
+
       const last = getLastChange();
       if(!last){
         ultimoEl.textContent = '— (sin registro)';
         diasMesEl.textContent = 'Se compara contra lo recorrido';
         estadoEl.textContent = 'Registra tu primer cambio de aceite.';
-        estadoEl.className = 'status warn';
+        estadoEl.className = 'gauge-status warn';
         kmDetalleEl.textContent = '—';
         setBar(0,'ok');
         mileageRevEl.disabled = true;
         btnGPS.disabled = true;
         notaRevisEl.textContent = 'Primero registra el km cuando cambias el aceite.';
+        reminderTextEl.textContent = 'Registra tu primer cambio para generar un recordatorio.';
+        btnRecordatorio.disabled = true;
+        renderHistorial();
+        checkBanner();
         return;
       }
 
@@ -231,7 +747,11 @@
       diasMesEl.textContent = `${dias} día${dias!==1?'s':''} desde el último cambio`;
       mileageRevEl.disabled = false;
       btnGPS.disabled = !navigator.geolocation;
-      notaRevisEl.textContent = `Base: ${fmtKm(last.mileage)} km${last.lat?' · coordenadas GPS guardadas ✓':''}`;
+      notaRevisEl.textContent = `Base: ${fmtKm(last.mileage)} km${last.lat?' · coordenadas GPS guardadas':''}`;
+
+      const proximaFecha = estimarProximaFecha();
+      reminderTextEl.textContent = `Estimado para el ${formatLong(proximaFecha)}. Descarga un evento con alarma 3 días antes y el mismo día — funciona aunque no abras esta página.`;
+      btnRecordatorio.disabled = false;
 
       const saved = getCurrentMileage();
       if(saved && saved > 0){
@@ -239,10 +759,13 @@
         calcularEnVivo();
       } else {
         estadoEl.textContent = 'Escribe el km actual para ver el estado.';
-        estadoEl.className = 'status ok';
+        estadoEl.className = 'gauge-status ok';
         kmDetalleEl.textContent = '—';
         setBar(0,'ok');
       }
+
+      renderHistorial();
+      checkBanner();
     }
 
     mileageRevEl.addEventListener('input', calcularEnVivo);
@@ -257,8 +780,12 @@
 
       function guardar(coords){
         if(coords){ data.lat=coords.latitude; data.lon=coords.longitude; }
+        const hist = getHistory();
+        hist.push(data);
+        setHistory(hist);
         setLastChange(data);
         clearCurrentMileage();
+        sessionStorage.removeItem('bannerDismissed');
         mileageCambioEl.value='';
         mileageRevEl.value='';
         render();
@@ -285,7 +812,7 @@
       }
 
       btnGPS.disabled = true;
-      btnGPS.textContent = '📍…';
+      btnGPSLabelEl.textContent = 'Buscando...';
 
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -295,13 +822,13 @@
           notaRevisEl.textContent = `GPS: ~${fmtKm(linea*1.3)} km estimados en ruta (±30%) — verifica con el odómetro`;
           calcularEnVivo();
           btnGPS.disabled = false;
-          btnGPS.textContent = '📍 GPS';
+          btnGPSLabelEl.textContent = 'GPS';
         },
         err => {
           const msgs = {1:'Permiso de ubicación denegado.',3:'Tiempo de espera agotado.'};
           notaRevisEl.textContent = (msgs[err.code]||'No se pudo obtener la ubicación.')+' Ingresa el km manualmente.';
           btnGPS.disabled = false;
-          btnGPS.textContent = '📍 GPS';
+          btnGPSLabelEl.textContent = 'GPS';
         },
         {enableHighAccuracy:true, timeout:10000}
       );
@@ -312,6 +839,12 @@
       btnGPS.disabled = true;
       render();
     })();
+
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
