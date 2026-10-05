@@ -46,3 +46,32 @@ Mínimo: son funciones puras, sin dependencias de DOM ni de `localStorage` hoy, 
 ## Cómo se revierte
 
 Cambio aislado en la rama `mejora/2026-10-05`: revertir el commit de este paso (`git revert <hash>`) deja `index.html` exactamente como estaba, sin afectar nada más.
+
+## Lo que realmente se hizo (M6)
+
+Todo el plan se ejecutó tal cual, con dos ajustes descubiertos durante la construcción:
+
+1. **`sw.js` también se actualizó** (no estaba en el plan original): la lista `ASSETS` que precachea el service worker no incluía `js/utils.js`. Sin este ajuste, la primera carga offline se habría roto. Se agregó `./js/utils.js` a `ASSETS` y se subió `CACHE_NAME` a `v2` para forzar la renovación del caché.
+2. **Comando real del runner:** `node --test tests/` (el planeado) falla en este entorno (Windows + Git Bash) con `Cannot find module 'tests'` — Node no resuelve el directorio como se esperaba. El comando que sí funciona de forma confiable es apuntar a un glob explícito: `node --test "tests/**/*.test.js"`. Se deja documentado así para M-10 (CI).
+
+### Evidencia real
+
+`node --test "tests/**/*.test.js"`:
+
+```
+✔ pad2 rellena con cero a la izquierda
+✔ ymd formatea fecha en cambio de ano
+✔ fromYMD reconoce 29 de febrero en ano bisiesto
+✔ diffDays: mismo dia es 0
+✔ diffDays: cruza fin de mes
+✔ diffDays: fechas invertidas da negativo
+✔ addMonths cruza de diciembre a enero del ano siguiente
+✔ haversineKm: 1 grado de latitud es aproximadamente 111.2 km
+✔ fmtKm formatea con separador de miles es-CO
+✔ formatLong y formatShort producen texto en espanol
+ℹ tests 10
+ℹ pass 10
+ℹ fail 0
+```
+
+Verificación manual en el navegador (servidor estático local, `http://localhost:8420`): se registró un cambio de 15.000 km. El panel mostró "lunes, 5 de octubre de 2026 · 15.000 km" como último cambio, "0 días desde el último cambio", el historial con "5/10/2026 · 15.000 km", y el recordatorio estimado para "lunes, 5 de abril de 2027" (+6 meses, el umbral por defecto) — idéntico al comportamiento esperado antes del refactor. Se confirmó además que `js/utils.js` se carga (`<script src="js/utils.js">` presente) y expone `pad2`/`haversineKm` como funciones globales, igual que cuando estaban inline.

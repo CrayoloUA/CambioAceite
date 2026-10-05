@@ -1,11 +1,12 @@
-const CACHE_NAME = 'cambio-aceite-v1';
+const CACHE_NAME = 'cambio-aceite-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  './js/utils.js'
 ];
 
 self.addEventListener('install', (event) => {
