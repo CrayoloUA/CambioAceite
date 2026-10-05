@@ -365,6 +365,7 @@
   <footer>Hecho por Crayolo · Guardado local en tu navegador</footer>
 
   <script src="js/utils.js"></script>
+  <script src="js/logic.js"></script>
   <script>
     const DEFAULT_KM_UMBRAL = 3000;
     const DEFAULT_MESES_UMBRAL = 6;
@@ -428,32 +429,15 @@
 
     function parseNum(v){ const n=Number(String(v).replace(',','.')); return Number.isFinite(n)?n:NaN; }
 
-    // --- Estimación de la próxima fecha de cambio ---
-    // Combina el tope por meses con una proyección por ritmo real de uso (km/día
-    // promedio entre el primer y el último registro del historial), y usa la que
-    // ocurra primero. Así, si manejas mucho, el recordatorio se adelanta solo.
+    // El cálculo puro vive en js/logic.js (calcularProximaFecha); aquí solo se
+    // le pasan los datos leídos de localStorage.
     function estimarProximaFecha(){
-      const last = getLastChange();
-      if(!last) return null;
-
-      const lastDate = fromYMD(last.date);
-      const porMeses = addMonths(lastDate, getMesesUmbral());
-
-      const hist = getHistory().slice().sort((a,b) => fromYMD(a.date)-fromYMD(b.date));
-      let porKm = null;
-      if(hist.length >= 2){
-        const primero = hist[0], ultimo = hist[hist.length-1];
-        const dias = diffDays(fromYMD(primero.date), fromYMD(ultimo.date));
-        const kmRecorridos = Number(ultimo.mileage) - Number(primero.mileage);
-        if(dias > 0 && kmRecorridos > 0){
-          const kmPorDia = kmRecorridos / dias;
-          const diasParaUmbral = Math.ceil(getKmUmbral() / kmPorDia);
-          porKm = new Date(lastDate);
-          porKm.setDate(porKm.getDate() + diasParaUmbral);
-        }
-      }
-
-      return (porKm && porKm.getTime() < porMeses.getTime()) ? porKm : porMeses;
+      return calcularProximaFecha({
+        last: getLastChange(),
+        history: getHistory(),
+        kmUmbral: getKmUmbral(),
+        mesesUmbral: getMesesUmbral()
+      });
     }
 
     function icsFecha(d, h, m){
@@ -537,27 +521,14 @@
         return;
       }
 
-      const umbral = getKmUmbral();
-      const pct = (delta/umbral)*100;
-      const falta = umbral - delta;
       setCurrentMileage(Math.round(newKm));
 
-      if(delta >= umbral){
-        estadoEl.textContent = '¡Hay que cambiar el aceite!';
-        estadoEl.className = 'gauge-status late';
-        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(delta-umbral)} km de exceso`;
-        setBar(100,'late');
-      } else if(pct >= 60){
-        estadoEl.textContent = `Pronto toca cambio — faltan ${fmtKm(falta)} km`;
-        estadoEl.className = 'gauge-status warn';
-        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
-        setBar(pct,'warn');
-      } else {
-        estadoEl.textContent = `Todo bien — faltan ${fmtKm(falta)} km`;
-        estadoEl.className = 'gauge-status ok';
-        kmDetalleEl.textContent = `${fmtKm(delta)} km recorridos · ${fmtKm(falta)} km restantes`;
-        setBar(pct,'ok');
-      }
+      // El cálculo puro vive en js/logic.js (calcularEstadoKm).
+      const { nivel, texto, detalle, pct } = calcularEstadoKm(delta, getKmUmbral());
+      estadoEl.textContent = texto;
+      estadoEl.className = 'gauge-status ' + nivel;
+      kmDetalleEl.textContent = detalle;
+      setBar(pct, nivel);
 
       checkBanner();
     }

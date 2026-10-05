@@ -49,3 +49,27 @@ Bajo: es una extracción fiel, sin cambiar fórmulas ni umbrales. El riesgo real
 ## Cómo se revierte
 
 `git revert` del commit de este paso, aislado en `mejora/2026-10-05`.
+
+## Lo que realmente se hizo (M6)
+
+El plan se ejecutó tal cual, sin desviaciones. Evidencia real:
+
+```
+node --test "tests/**/*.test.js"
+ℹ tests 16
+ℹ pass 16
+ℹ fail 0
+```
+
+(10 pruebas de M-01 + 6 nuevas de M-02, todas pasando.)
+
+Verificación manual en navegador (servidor local): se registró un cambio de 10.000 km
+(umbral 3.000 km) y se probaron los 3 niveles escribiendo el km actual:
+
+| Km actual | Delta | Nivel esperado | Resultado real en pantalla |
+|---|---|---|---|
+| 11.000 | 1.000 | ok | "Todo bien — faltan 2.000 km" · "1.000 km recorridos · 2.000 km restantes" |
+| 12.000 | 2.000 | warn | "Pronto toca cambio — faltan 1.000 km" · "2.000 km recorridos · 1.000 km restantes" |
+| 13.500 | 3.500 | late | "¡Hay que cambiar el aceite!" · "3.500 km recorridos · 500 km de exceso" |
+
+Los tres coinciden exactamente con los textos y umbrales documentados en la Fase A — sin regresión.
