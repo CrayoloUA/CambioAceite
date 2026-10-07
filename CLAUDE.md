@@ -22,12 +22,16 @@ node --test "tests/**/*.test.js"
 ## Arquitectura
 
 La mayor parte de la UI vive en `index.html`: CSS inline, HTML, y un `<script>` con
-persistencia en `localStorage` (clave `aceite_km_state_v1`), lógica de negocio, y
-renderizado. Las utilidades puras (fechas, formato, Haversine) viven en `js/utils.js`,
-cargado antes del script principal — mismo archivo sirve al navegador (variables
-globales) y a las pruebas en Node (`module.exports` condicional). `sw.js` cachea los
-assets estáticos (incluido `js/utils.js`) para que la app funcione offline.
-`manifest.json` la hace instalable.
+persistencia en `localStorage` (clave `aceite_km_state_v1`) y renderizado. La lógica
+de negocio pura vive en dos archivos cargados antes del script principal (en este
+orden): `js/utils.js` (fechas, formato, Haversine) y `js/logic.js`
+(`calcularProximaFecha`, `calcularEstadoKm` — depende de las utilidades de
+`js/utils.js`, que deben cargarse primero). Ambos sirven al navegador (variables
+globales) y a las pruebas en Node (`module.exports` condicional) sin build. El
+`<script>` principal solo tiene envoltorios delgados que leen `localStorage`/DOM y
+llaman a esas funciones puras — no hay cálculo de negocio fuera de `js/`.
+`sw.js` cachea los assets estáticos (incluidos `js/utils.js` y `js/logic.js`) para
+que la app funcione offline. `manifest.json` la hace instalable.
 
 ## Convenciones
 
