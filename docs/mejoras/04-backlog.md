@@ -10,7 +10,7 @@ Orden de prioridad acordado en M0: red de seguridad (pruebas) → seguridad crí
 |---|---|---|---|---|---|---|---|---|
 | M-01 | Calidad | Base mínima de pruebas automatizadas (sin build) para las funciones puras: `haversineKm`, utilidades de fecha | CAL1 — cero pruebas hoy; ya aprobado en M0 | Alto | S | Bajo | Ninguna | Hecho |
 | M-02 | Arquitectura | Separar el cálculo puro de `estimarProximaFecha`/`calcularEnVivo` de la lectura de `localStorage` y la escritura al DOM, sin cambiar su comportamiento (demostrado con pruebas de caracterización) | AR1 — lógica de negocio acoplada a storage/DOM, no se puede probar aislada | Alto | M | Bajo | M-01 (las pruebas de caracterización van primero) | Hecho |
-| M-03 | Calidad | `try/catch` en `saveState` con aviso visible si falla (ej. `localStorage` no disponible) | CAL2 — hoy una excepción no capturada falla en silencio | Medio | S | Bajo | Ninguna | Propuesto |
+| M-03 | Calidad | `try/catch` en `saveState` con aviso visible si falla (ej. `localStorage` no disponible) | CAL2 — hoy una excepción no capturada falla en silencio | Medio | S | Bajo | Ninguna | Hecho |
 | M-04 | Seguridad | Validar la forma mínima del JSON importado antes de aceptarlo (¿`history` es arreglo? ¿`mileage`/`date` del tipo esperado?) | SEG1 — hoy solo se valida `typeof === 'object'` | Medio | S | Bajo | Ninguna | Propuesto |
 
 ## Lote B — Arquitectura y correcciones menores (BAJO RIESGO)
