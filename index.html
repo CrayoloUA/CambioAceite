@@ -377,7 +377,13 @@
       catch{ return {}; }
     }
     function saveState(patch){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({...loadState(),...patch}));
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({...loadState(),...patch}));
+        return true;
+      }catch(e){
+        alert('No se pudo guardar el cambio. Revisa que el navegador no esté en modo privado o que haya espacio de almacenamiento disponible.');
+        return false;
+      }
     }
     const getLastChange = () => loadState().lastChange || null;
     const setLastChange = lc => saveState({lastChange:lc});

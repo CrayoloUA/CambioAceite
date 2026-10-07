@@ -34,3 +34,12 @@ Solo `index.html` (función `saveState`).
 ## Cómo se revierte
 
 `git revert` del commit de este paso.
+
+## Lo que realmente se hizo (M6)
+
+Plan ejecutado tal cual. Verificado en el navegador (consola, sin servidor de prueba adicional más allá del ya usado en M-01/M-02):
+
+- **Camino normal:** `localStorage.clear(); saveState({test:1})` → devuelve `true`, el dato queda guardado igual que antes.
+- **Camino de fallo (forzado):** se sobreescribió temporalmente `Storage.prototype.setItem` para que lance `QuotaExceededError`, y `window.alert` para capturar el mensaje sin bloquear la prueba. Resultado: `saveState` no lanza excepción hacia arriba (`threw: false`), devuelve `false`, y el usuario ve el aviso: *"No se pudo guardar el cambio. Revisa que el navegador no esté en modo privado o que haya espacio de almacenamiento disponible."*
+- **No-regresión:** con el storage restaurado, se registró un cambio real (9.000 km) desde la UI — mismo comportamiento que antes (fecha, km, recordatorio estimado), sin errores en consola.
+
